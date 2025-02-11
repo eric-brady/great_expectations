@@ -254,11 +254,15 @@ class ExpectTableRowCountToBeBetween(BatchExpectation):
                 f"min_value ({min_value}) must be less than or equal to max_value ({max_value})"
             )
 
-        if isinstance(min_value, dict) and isinstance(max_value, dict):
-            if "$PARAMETER" not in min_value or "$PARAMETER" not in max_value:
-                raise ValueError(
-                    "min_value and max_value must both contain key $PARAMETER specifying a parameter name in the runtime dictionary"
-                )
+        if isinstance(min_value, dict) and "$PARAMETER" not in min_value:
+            raise ValueError(
+                "min_value must contain key $PARAMETER specifying a parameter name in the runtime dictionary"
+            )
+
+        if isinstance(max_value, dict) and "$PARAMETER" not in max_value:
+            raise ValueError(
+                "max_value must contain key $PARAMETER specifying a parameter name in the runtime dictionary"
+            )
 
         return values
 
