@@ -243,10 +243,22 @@ class ExpectTableRowCountToBeBetween(BatchExpectation):
         min_value = values.get("min_value")
         max_value = values.get("max_value")
 
-        if min_value is not None and max_value is not None and min_value > max_value:
+        if (
+            min_value is not None
+            and max_value is not None
+            and not isinstance(min_value, dict)
+            and not isinstance(max_value, dict)
+            and min_value > max_value
+        ):
             raise ValueError(  # noqa: TRY003 # Error message gets swallowed by Pydantic
                 f"min_value ({min_value}) must be less than or equal to max_value ({max_value})"
             )
+
+        if isinstance(min_value, dict) and isinstance(max_value, dict):
+            if "$PARAMETER" not in min_value or "$PARAMETER" not in max_value:
+                raise ValueError(
+                    "min_value and max_value must both contain key $PARAMETER specifying a parameter name in the runtime dictionary"
+                )
 
         return values
 
@@ -281,9 +293,7 @@ class ExpectTableRowCountToBeBetween(BatchExpectation):
                 )
 
             if params.min_value and params.max_value:
-                template_str = (
-                    f"Must have {at_least_str} $min_value and {at_most_str} $max_value rows."
-                )
+                template_str = f"Must have {at_least_str} $min_value and {at_most_str} $max_value rows."
             elif not params.min_value:
                 template_str = f"Must have {at_most_str} $max_value rows."
             else:
@@ -323,15 +333,15 @@ class ExpectTableRowCountToBeBetween(BatchExpectation):
             at_least_str, at_most_str = handle_strict_min_max(params)
 
             if params["min_value"] is not None and params["max_value"] is not None:
-                template_str = (
-                    f"Must have {at_least_str} $min_value and {at_most_str} $max_value rows."
-                )
+                template_str = f"Must have {at_least_str} $min_value and {at_most_str} $max_value rows."
             elif params["min_value"] is None:
                 template_str = f"Must have {at_most_str} $max_value rows."
             elif params["max_value"] is None:
                 template_str = f"Must have {at_least_str} $min_value rows."
             else:
-                raise ValueError("unresolvable template_str")  # noqa: TRY003 # FIXME CoP
+                raise ValueError(
+                    "unresolvable template_str"
+                )  # noqa: TRY003 # FIXME CoP
 
         return [
             RenderedStringTemplateContent(
